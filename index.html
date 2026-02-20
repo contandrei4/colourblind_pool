@@ -60,6 +60,23 @@ input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--border);bord
 input[type=text]:focus{outline:none;border-color:var(--accent)}
 #room-section{display:none}
 #peer-status{font-size:.66rem;color:var(--muted);margin-top:6px;min-height:18px;word-break:break-all}
+.device-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.device-btn{padding:16px 10px;border:2px solid var(--border);border-radius:10px;background:transparent;
+  color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer;text-align:center;
+  transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px}
+.device-btn:hover{border-color:var(--accent);background:rgba(240,192,64,.07)}
+.device-btn.chosen{border-color:var(--accent);background:rgba(240,192,64,.12);color:var(--accent)}
+.device-btn .dicon{font-size:1.8rem}
+.device-btn .dlabel{font-size:.7rem;letter-spacing:.05em}
+.device-btn .dsub{font-size:.58rem;color:var(--muted);margin-top:2px}
+.step-header{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+#device-screen{display:block}
+#mode-screen{display:none}
+.player-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.player-tag{font-size:.7rem;color:var(--accent);min-width:60px;font-weight:500}
+.chosen-badge{font-size:.65rem;padding:2px 7px;border-radius:4px;border:1px solid var(--border);color:var(--muted)}
+.chosen-badge.pc{border-color:#50a0f0;color:#50a0ff;background:rgba(80,160,255,.1)}
+.chosen-badge.phone{border-color:#f0a050;color:#f0a050;background:rgba(240,160,80,.1)}
 </style>
 </head>
 <body>
@@ -69,21 +86,70 @@ input[type=text]:focus{outline:none;border-color:var(--accent)}
 <!-- Mode selection overlay -->
 <div id="overlay">
   <div class="modal">
-    <h2>CHOOSE MODE</h2>
-    <p>Groups are told apart by <strong>pattern only</strong> — stripes vs dots — never by colour alone.</p>
-    <div class="modal-btns">
-      <button class="mode-btn" onclick="startMode('practice')">
-        <span class="icon">🎱</span>
-        <div><div>Practice Mode</div><div class="desc">Free play — no rules. Perfect your aim & spin.</div></div>
-      </button>
-      <button class="mode-btn" onclick="startMode('ai')">
-        <span class="icon">🤖</span>
-        <div><div>vs AI Opponent</div><div class="desc">Full 8-ball rules against a computer opponent.</div></div>
-      </button>
-      <button class="mode-btn" onclick="showOnline()">
-        <span class="icon">🌐</span>
-        <div><div>Online 2-Player</div><div class="desc">Play with a friend anywhere via peer-to-peer.</div></div>
-      </button>
+    <!-- Screen 1: YOUR device -->
+    <div id="device-screen">
+      <h2>YOUR DEVICE</h2>
+      <p>How will <strong>you</strong> control the game? Each player picks this on their own screen.</p>
+      <div class="device-grid" style="margin-top:16px">
+        <button class="device-btn" id="btn-pc" onclick="setMyDevice('pc')">
+          <span class="dicon">🖥️</span>
+          <span class="dlabel">PC / Mouse</span>
+          <span class="dsub">Move to aim, click to shoot</span>
+        </button>
+        <button class="device-btn" id="btn-phone" onclick="setMyDevice('phone')">
+          <span class="dicon">📱</span>
+          <span class="dlabel">Phone / Touch</span>
+          <span class="dsub">Tap to aim, release to shoot</span>
+        </button>
+      </div>
+      <p style="font-size:.6rem;color:var(--muted);margin-top:14px;line-height:1.6">
+        For local pass-and-play, P2 will pick their device on the next screen when you choose that mode.
+      </p>
+    </div>
+
+    <!-- Screen 2: Game mode -->
+    <div id="mode-screen" style="display:none">
+      <h2>CHOOSE MODE</h2>
+      <div id="my-device-display" style="margin-bottom:14px;font-size:.7rem;color:var(--muted)"></div>
+      <p>Groups are told apart by <strong>pattern only</strong> — stripes vs dots — never by colour alone.</p>
+      <div class="modal-btns" style="margin-top:12px">
+        <button class="mode-btn" onclick="startMode('practice')">
+          <span class="icon">🎱</span>
+          <div><div>Practice Mode</div><div class="desc">Solo free play — no rules, perfect your aim.</div></div>
+        </button>
+        <button class="mode-btn" onclick="startMode('ai')">
+          <span class="icon">🤖</span>
+          <div><div>vs AI Opponent</div><div class="desc">Full 8-ball rules against the computer.</div></div>
+        </button>
+        <button class="mode-btn" onclick="showLocalSetup()">
+          <span class="icon">🤝</span>
+          <div><div>Local 2-Player</div><div class="desc">Pass-and-play on the same screen.</div></div>
+        </button>
+        <button class="mode-btn" onclick="showOnline()">
+          <span class="icon">🌐</span>
+          <div><div>Online 2-Player</div><div class="desc">Play with a friend anywhere — each on their own device.</div></div>
+        </button>
+      </div>
+      <button class="btn" onclick="goToDeviceScreen()" style="width:100%;margin-top:10px">← Back</button>
+    </div>
+
+    <!-- Screen 3a: Local P2 device (pass-and-play) -->
+    <div id="local-setup-screen" style="display:none">
+      <h2>PLAYER 2 DEVICE</h2>
+      <p>Player 1 chose <span id="p1-device-recap" style="color:var(--accent)"></span>. Now Player 2 picks theirs:</p>
+      <div class="device-grid" style="margin-top:16px">
+        <button class="device-btn" id="p2-btn-pc" onclick="setP2Device('pc')">
+          <span class="dicon">🖥️</span>
+          <span class="dlabel">PC / Mouse</span>
+          <span class="dsub">Move to aim, click to shoot</span>
+        </button>
+        <button class="device-btn" id="p2-btn-phone" onclick="setP2Device('phone')">
+          <span class="dicon">📱</span>
+          <span class="dlabel">Phone / Touch</span>
+          <span class="dsub">Tap to aim, release to shoot</span>
+        </button>
+      </div>
+      <button class="btn" onclick="goToModeScreen()" style="width:100%;margin-top:10px">← Back</button>
     </div>
     <div id="room-section" style="margin-top:16px;text-align:left">
       <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -232,6 +298,11 @@ let mx=CW/2, my=CH/2;
 let animID=null;
 // Online
 let peerLib=null, peerConn=null, peerRole=null, myPeerID=null;
+// Device settings: 'pc' or 'phone' for each player
+// myDevice = this player's own device choice ('pc' or 'phone')
+// deviceP2 = only used in local pass-and-play
+let myDevice=null, deviceP2='pc';
+let touchStartX=0, touchStartY=0, touchActive=false;
 
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
@@ -930,7 +1001,13 @@ function getGroup(type){return balls.filter(b=>b.t===type);}
 
 function nextTurn(){
   turn=1-turn;
-  setTurn(`Player ${turn+1}'s turn`);
+  if(gameMode==='local'){
+    // Pass-and-play: show a handoff message before the new player can see the table
+    setTurn(`Player ${turn+1}'s turn`);
+    setMsg(`Hand the device to Player ${turn+1} and click when ready.`);
+  } else {
+    setTurn(`Player ${turn+1}'s turn`);
+  }
   if(gameMode==='ai'&&turn===1&&!gameOver){
     // Poll until balls have stopped, then fire AI
     function waitAndShoot(){
@@ -1114,7 +1191,7 @@ function startMode(mode){
   document.getElementById('overlay').style.display='none';
   document.getElementById('reset-btn').style.display='block';
   document.getElementById('menu-btn').style.display='block';
-  gameMode=mode; practiceMode=(mode==='practice');
+  gameMode=mode; practiceMode=(mode==='practice'); const isLocal=(mode==='local');
   gameOver=false;turn=0;playerGroup=[null,null];shooting=false;
   if(practiceMode){
     placingCue=false;breakMode=false;
@@ -1135,7 +1212,8 @@ function startMode(mode){
   loop();
   drawLegend();updateBallDisplay();
   if(practiceMode){setTurn('Practice Mode');setMsg('Free aim — click to shoot!');}
-  else if(mode==='ai'){setTurn("Player 1's turn");setMsg('🎱 Place the cue ball behind the head string to break!');}
+  else if(mode==='ai'){setTurn("Player 1's turn");setMsg('You = STRIPES ▤   AI = DIAMONDS ◆ — place the cue ball to break!');}
+  else if(mode==='local'){setTurn("Player 1's turn");setMsg('🎱 P1: place the cue ball behind the head string!');}
   else{setTurn("Player 1's turn");setMsg('🎱 Place the cue ball behind the head string to break!');}
 }
 
@@ -1161,16 +1239,125 @@ function resetGame(){
 
 function showMenu(){
   document.getElementById('overlay').style.display='flex';
-  document.getElementById('room-section').style.display='none';
+  // Go back to mode screen (device already chosen for this session)
+  showScreen('mode-screen');
 }
+
+// ── Device selector ──────────────────────────────────────────────────────────
+function showScreen(id){
+  ['device-screen','mode-screen','local-setup-screen','room-section'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(el)el.style.display=(s===id?'block':'none');
+  });
+}
+
+function setMyDevice(type){
+  myDevice=type;
+  document.getElementById('btn-pc').classList.toggle('chosen',type==='pc');
+  document.getElementById('btn-phone').classList.toggle('chosen',type==='phone');
+  // Small delay so the button highlight is visible before transitioning
+  setTimeout(goToModeScreen, 220);
+}
+
+function setP2Device(type){
+  deviceP2=type;
+  document.getElementById('p2-btn-pc').classList.toggle('chosen',type==='pc');
+  document.getElementById('p2-btn-phone').classList.toggle('chosen',type==='phone');
+  setTimeout(()=>startMode('local'),220);
+}
+
+function showLocalSetup(){
+  const label = myDevice==='phone'?'📱 Phone':'🖥️ PC';
+  document.getElementById('p1-device-recap').textContent=label;
+  showScreen('local-setup-screen');
+}
+
+function goToModeScreen(){
+  // Update device recap label
+  const d=document.getElementById('my-device-display');
+  if(d)d.textContent='Your device: '+(myDevice==='phone'?'📱 Phone / Touch':'🖥️ PC / Mouse');
+  showScreen('mode-screen');
+}
+function goToDeviceScreen(){
+  showScreen('device-screen');
+}
+
+// ── Touch controls ────────────────────────────────────────────────────────────
+// For phone players: touch-start sets aim origin, touch-move updates angle,
+// touch-end fires the shot.
+function getTouchPos(e){
+  const r=canvas.getBoundingClientRect();
+  const t=e.touches[0]||e.changedTouches[0];
+  return{
+    x:(t.clientX-r.left)*(CW/r.width),
+    y:(t.clientY-r.top)*(CH/r.height)
+  };
+}
+
+function isPhonePlayer(){
+  // Online / practice / ai: myDevice is always this player's own device
+  if(gameMode==='online'||gameMode==='practice'||gameMode==='ai') return myDevice==='phone';
+  // Local pass-and-play: P1 uses myDevice, P2 uses deviceP2
+  if(gameMode==='local'){
+    return (turn===0&&myDevice==='phone')||(turn===1&&deviceP2==='phone');
+  }
+  return myDevice==='phone';
+}
+
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(!isPhonePlayer())return;
+  const pos=getTouchPos(e);
+  if(placingCue){
+    // On touch start during placement, just move ghost
+    mx=pos.x; my=pos.y;
+    return;
+  }
+  touchStartX=pos.x; touchStartY=pos.y;
+  mx=pos.x; my=pos.y;
+  touchActive=true;
+},{passive:false});
+
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!isPhonePlayer())return;
+  const pos=getTouchPos(e);
+  mx=pos.x; my=pos.y;
+  if(placingCue){/* ghost follows finger */}
+},{passive:false});
+
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(!isPhonePlayer())return;
+  const pos=getTouchPos(e);
+  if(placingCue){
+    const cx=pos.x, cy=pos.y;
+    const behindLine=!breakMode||cx<HEAD_X-BR;
+    if(behindLine&&!ballOverlap(cx,cy,cueBall)){
+      cueBall.x=cx;cueBall.y=cy;
+      cueBall.pocketed=false;cueBall.vx=0;cueBall.vy=0;
+      placingCue=false;
+      if(breakMode)breakMode=false;
+      if(gameMode==='online'&&peerConn?.open)peerConn.send({type:'place',x:cx,y:cy});
+    }
+    touchActive=false;
+    return;
+  }
+  if(!touchActive)return;
+  touchActive=false;
+  if(!isMyTurn()||anyMoving())return;
+  // Shoot in direction from touch-start (cue ball area) to touch-end
+  // If start was near cue ball, use that; otherwise use cue ball as origin
+  shoot(Math.atan2(my-cueBall.y,mx-cueBall.x));
+},{passive:false});
 
 // ── Online P2P (PeerJS) ───────────────────────────────────────────────────────
 function showOnline(){
-  document.getElementById('room-section').style.display='block';
+  showScreen('room-section');
   switchTab('host');
   loadPeer();
 }
-function hideOnline(){document.getElementById('room-section').style.display='none';}
+function hideOnline(){showScreen('mode-screen');}
 
 function switchTab(tab){
   document.getElementById('host-section').style.display=tab==='host'?'block':'none';
